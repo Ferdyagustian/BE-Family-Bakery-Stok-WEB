@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+psycopg2-binary
+pydantic-settings
+alembic
+cuid
+pandas
+numpy
+timesfm
+bcrypt
+python-dotenv
+psycopg2-binary
