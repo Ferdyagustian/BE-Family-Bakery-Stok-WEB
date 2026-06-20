@@ -48,12 +48,11 @@ def generate_forecast(req: ForecastRequest, session: Session = Depends(get_sessi
         raise HTTPException(status_code=403, detail="Unauthorized")
 
     # 1. Fetch historical sales data from the database
-    sales = session.exec(
-        select(Sale)
-        .where(Sale.storeId == req.storeId)
-        .where(Sale.productId == req.productId)
-        .order_by(Sale.saleDate)
-    ).all()
+    query = select(Sale).where(Sale.productId == req.productId)
+    if req.storeId and req.storeId != "ALL":
+        query = query.where(Sale.storeId == req.storeId)
+        
+    sales = session.exec(query.order_by(Sale.saleDate)).all()
     
     if not sales or len(sales) < 5:
         # TimesFM needs a decent amount of context (historical data) to predict accurately
