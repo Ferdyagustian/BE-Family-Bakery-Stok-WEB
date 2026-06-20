@@ -11,14 +11,25 @@ app = FastAPI(
     version="1.0.0"
 )
 
+from fastapi import Request, Response
 # Enable CORS for the Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Updated to allow all origins for deployment. Change this to your frontend URL later.
+    allow_origins=["http://localhost:3000", "https://family-bakery-stok.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response: Response = await call_next(request)
+    # OWASP Basic Security Headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 app.include_router(stores.router)
 app.include_router(products.router)

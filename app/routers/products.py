@@ -7,8 +7,7 @@ from typing import List, Optional, Dict, Any
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 
-def get_current_user() -> User:
-    return User(id="dummy_admin", username="admin", passwordHash="xxx", role=Role.ADMIN)
+from app.auth import get_current_user
 
 class ProductCreate(BaseModel):
     name: str
@@ -184,6 +183,35 @@ def delete_product(product_id: str, session: Session = Depends(get_session), use
         entityType="Product",
         entityId=product_id,
         entityName=prod_name
+    )
+    session.add(audit)
+    session.commit()
+    
+    return {"success": True}
+
+@router.delete("/store-product/{store_id}/{product_id}")
+def delete_store_product(store_id: str, product_id: str, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    if user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+        
+    sp = session.exec(select(StoreProduct).where(StoreProduct.storeId == store_id, StoreProduct.productId == product_id)).first()
+    if not sp:
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan di cabang ini")
+        
+    product = session.get(Product, product_id)
+    prod_name = product.name if product else "Unknown"
+    
+    session.delete(sp)
+    
+    audit = AuditLog(
+        userId=user.id,
+        username=user.username,
+        action="DELETE_STORE_PRODUCT",
+        entityType="StoreProduct",
+        entityId=product_id,
+        entityName=prod_name,
+        storeId=store_id,
+        detail="Product removed from branch"
     )
     session.add(audit)
     session.commit()

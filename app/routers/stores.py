@@ -1,17 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from app.database import get_session
+from app.auth import get_current_user
 from app.models import Store, Product, StoreProduct, AuditLog, User, Role
 from pydantic import BaseModel
 from typing import List, Optional
 
 router = APIRouter(prefix="/api/stores", tags=["Stores"])
-
-# --- Placeholder for Auth ---
-# In a real scenario, this would extract the JWT token from the header
-def get_current_user() -> User:
-    # Dummy admin user for now so development can continue
-    return User(id="dummy_admin", username="admin", passwordHash="xxx", role=Role.ADMIN)
 
 class StoreCreate(BaseModel):
     name: str
